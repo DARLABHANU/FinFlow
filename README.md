@@ -1,4 +1,18 @@
-# FinFlow - Production-Grade Fintech Application
+# FinFlow - Financial Management App
+
+## 🚀 Backend Deployment (Render)
+I have included a `render.yaml` file in the `backend/` directory to make your deployment to **Render.com** as easy as possible. 
+
+### Steps to Deploy:
+1. Push your `backend` folder to a GitHub repository.
+2. In Render, create a new **Blueprints** instance and connect your repo.
+3. Configure the following environment variables in the Render Dashboard:
+   - `MONGO_URI`: Your MongoDB Atlas connection string.
+   - `GOOGLE_API_KEY`: Your Gemini API key for receipt scanning.
+   - `JWT_SECRET`: A secure random string for authentication.
+
+## 📱 Mobile App Install
+The app is currently building and installing natively on your phone via USB. This creates a standalone version separate from the Expo Go app.
 
 ## Architecture Overview
 
