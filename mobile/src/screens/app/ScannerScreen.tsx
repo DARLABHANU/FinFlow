@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Platform, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import apiClient from '../../api/apiClient';
 import { useTransactionStore } from '../../store/transactionStore';
 import { useAuthStore } from '../../store/authStore';
+import { THEME } from '../../theme/theme';
+
+const { width } = Dimensions.get('window');
 
 export default function ScannerScreen({ navigation }: any) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -18,19 +23,18 @@ export default function ScannerScreen({ navigation }: any) {
   const { currency } = useAuthStore();
   const curSymbol = currency === 'USD' ? '$' : '₹';
 
-  if (!permission) {
-    return <View style={styles.container} />;
-  }
+  if (!permission) return <View style={styles.container} />;
 
   if (!permission.granted) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
-        <MaterialIcons name="camera-alt" size={64} color="#1e3b8a" />
-        <Text style={{ color: '#FFF', fontSize: 18, textAlign: 'center', marginVertical: 20 }}>
-          FinFlow needs camera access to scan receipts
-        </Text>
-        <TouchableOpacity style={styles.confirmBtn} onPress={requestPermission}>
-          <Text style={styles.confirmText}>Grant Permission</Text>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <View style={styles.permissionIcon}>
+           <MaterialIcons name="camera-alt" size={48} color={THEME.colors.secondary} />
+        </View>
+        <Text style={styles.permissionTitle}>Camera Required</Text>
+        <Text style={styles.permissionSub}>FinFlow needs camera access to high-tech scan receipts with AI.</Text>
+        <TouchableOpacity style={styles.grantBtn} onPress={requestPermission}>
+           <Text style={styles.grantTxt}>Review Permission</Text>
         </TouchableOpacity>
       </View>
     );
@@ -49,11 +53,10 @@ export default function ScannerScreen({ navigation }: any) {
       if (response.data?.success) {
         setOcrData(response.data.data);
       } else {
-        Alert.alert('Scan Failed', 'AI could not find receipt details.');
+        Alert.alert('AI Scanner', 'The receipt was too blurry. Try again in better light.');
       }
     } catch (error) {
-       console.log("Scanner Error:", error);
-       Alert.alert('Error', 'Camera capture failed.');
+       Alert.alert('Scanner Error', 'We could not capture the image.');
     } finally {
       setIsScanning(false);
     }
@@ -71,98 +74,117 @@ export default function ScannerScreen({ navigation }: any) {
       });
       navigation.goBack();
     } catch (error) {
-       Alert.alert('Error', 'Failed to save transaction.');
+       Alert.alert('Save Failed', 'Unable to record scanned purchase.');
     }
   };
 
   return (
     <View style={styles.container}>
       <CameraView 
-        style={styles.bg} 
+        style={styles.camera} 
         facing="back" 
         enableTorch={torch}
         ref={cameraRef}
       >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
-              <MaterialIcons name="arrow-back" size={24} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Scan Receipt</Text>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setTorch(!torch)}>
-              <MaterialIcons name={torch ? "flash-on" : "flash-off"} size={24} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.frameContainer}>
-             <View style={styles.frame}>
-                {isScanning && <View style={styles.scanLine} />}
-             </View>
-             <View style={styles.instructionBox}>
-                <Text style={styles.instruction}>
-                  {isScanning ? 'AI analyzing receipt...' : 'Frame the receipt & tap Capture'}
-                </Text>
-             </View>
-          </View>
-
-          {/* Capture Button or AI Sheet */}
-          {!isScanning && !ocrData && (
-             <TouchableOpacity style={styles.captureBtn} onPress={takePicture}>
-                <View style={styles.captureCircleOuter}>
-                   <View style={styles.captureCircleInner} />
-                </View>
-             </TouchableOpacity>
-          )}
-
-          {!isScanning && ocrData && (
-            <View style={styles.sheet}>
-              <View style={styles.handle} />
-              <View style={styles.sheetHeader}>
-                 <View style={styles.sheetIconBox}>
-                   <MaterialIcons name="receipt-long" size={24} color="#1e3b8a" />
-                 </View>
-                 <View>
-                   <Text style={styles.sheetTitle}>Receipt Detected</Text>
-                   <Text style={styles.sheetSub}>FinFlow AI extracted the details</Text>
-                 </View>
+        <SafeAreaView style={styles.safe}>
+           {/* Header Controls */}
+           <View style={styles.topBar}>
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <MaterialIcons name="close" size={24} color="#FFF" />
+              </TouchableOpacity>
+              <View style={styles.titleArea}>
+                 <Text style={styles.titleMain}>AI Scanner</Text>
+                 <Text style={styles.titleSub}>{isScanning ? 'Processing...' : 'Point & Scan'}</Text>
               </View>
+              <TouchableOpacity style={styles.torchButton} onPress={() => setTorch(!torch)}>
+                <MaterialIcons name={torch ? "flash-on" : "flash-off"} size={22} color="#FFF" />
+              </TouchableOpacity>
+           </View>
 
-              <View style={styles.grid}>
-                 <View style={styles.gridBox}>
-                   <Text style={styles.gridLabel}>MERCHANT</Text>
-                   <Text style={styles.gridVal} numberOfLines={1}>{ocrData.merchant}</Text>
-                 </View>
-                 <View style={styles.gridBox}>
-                   <Text style={styles.gridLabel}>DATE</Text>
-                   <Text style={styles.gridVal}>{new Date(ocrData.date).toLocaleDateString()}</Text>
-                 </View>
-                 <View style={[styles.gridBox, styles.gridBoxFull]}>
-                   <View>
-                     <Text style={[styles.gridLabel, { color: '#1e3b8a' }]}>TOTAL AMOUNT</Text>
-                     <Text style={styles.gridAm}>{curSymbol}{Number(ocrData.amount).toFixed(2)}</Text>
-                   </View>
-                   <MaterialIcons name="payments" size={32} color="rgba(30,59,138,0.2)" />
-                 </View>
+           {/* Viewport Frame */}
+           <View style={styles.frameWrap}>
+              <View style={styles.viewport}>
+                 <View style={[styles.corner, styles.tl]} />
+                 <View style={[styles.corner, styles.tr]} />
+                 <View style={[styles.corner, styles.bl]} />
+                 <View style={[styles.corner, styles.br]} />
+                 {isScanning && (
+                   <LinearGradient
+                     colors={['rgba(59, 130, 246, 0)', 'rgba(59, 130, 246, 0.5)', 'rgba(59, 130, 246, 0)']}
+                     style={styles.scanLine}
+                   />
+                 )}
               </View>
-
-              <View style={styles.actions}>
-                <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-                  <MaterialIcons name="check-circle" size={20} color="#FFF" />
-                  <Text style={styles.confirmText}>Confirm & Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.editBtn} onPress={() => setOcrData(null)}>
-                  <MaterialIcons name="close" size={24} color="#ef4444" />
-                </TouchableOpacity>
+              <View style={styles.tipBox}>
+                 <Text style={styles.tipText}>Place the receipt centered within the corners</Text>
               </View>
-            </View>
-          )}
+           </View>
 
-          {isScanning && (
-             <View style={[styles.sheet, { alignItems: 'center', justifyContent: 'center' }]}>
-               <ActivityIndicator size="large" color="#1e3b8a" />
-               <Text style={{ marginTop: 10, color: '#1e3b8a', fontWeight: 'bold' }}>AI processing receipt...</Text>
-             </View>
-          )}
+           {/* Controls Bottom */}
+           <View style={styles.bottomArea}>
+              {!ocrData && !isScanning && (
+                 <TouchableOpacity style={styles.shutter} activeOpacity={0.8} onPress={takePicture}>
+                    <View style={styles.shutterRing}>
+                       <View style={styles.shutterInside} />
+                    </View>
+                 </TouchableOpacity>
+              )}
+              
+              {isScanning && (
+                 <View style={styles.processingCard}>
+                    <ActivityIndicator size="large" color={THEME.colors.secondary} />
+                    <Text style={styles.processingTxt}>AI Analyzing Details...</Text>
+                 </View>
+              )}
+           </View>
+
+           {/* Result Sheet (Glassmorphism) */}
+           {ocrData && !isScanning && (
+              <View style={styles.resultSheet}>
+                 <BlurView intensity={100} tint="light" style={styles.glassContainer}>
+                    <View style={styles.sheetHandle} />
+                    <View style={styles.sheetHeader}>
+                       <View style={styles.checkIcon}>
+                          <MaterialIcons name="receipt-long" size={24} color={THEME.colors.secondary} />
+                       </View>
+                       <View>
+                          <Text style={styles.sheetTitle}>Receipt Analyzed</Text>
+                          <Text style={styles.sheetSub}>FinFlow AI successfully extracted data</Text>
+                       </View>
+                    </View>
+
+                    <View style={styles.dataGrid}>
+                       <View style={styles.dataCell}>
+                          <Text style={styles.dataLabel}>MERCHANT</Text>
+                          <Text style={styles.dataValue} numberOfLines={1}>{ocrData.merchant}</Text>
+                       </View>
+                       <View style={styles.dataCell}>
+                          <Text style={styles.dataLabel}>DATE</Text>
+                          <Text style={styles.dataValue}>{new Date(ocrData.date).toLocaleDateString()}</Text>
+                       </View>
+                       <View style={[styles.dataCell, styles.wideCell]}>
+                          <View>
+                             <Text style={[styles.dataLabel, { color: THEME.colors.secondary }]}>EXTRACTED AMOUNT</Text>
+                             <Text style={styles.amountText}>{curSymbol}{Number(ocrData.amount).toFixed(2)}</Text>
+                          </View>
+                          <MaterialIcons name="credit-card" size={32} color={THEME.colors.border} />
+                       </View>
+                    </View>
+
+                    <View style={styles.sheetActions}>
+                       <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+                          <LinearGradient colors={[THEME.colors.secondary, '#60A5FA']} style={styles.confirmGradient} start={{x:0,y:0}} end={{x:1,y:0}}>
+                             <MaterialIcons name="check-circle" size={22} color="#FFF" />
+                             <Text style={styles.confirmTxt}>Confirm & Record</Text>
+                          </LinearGradient>
+                       </TouchableOpacity>
+                       <TouchableOpacity style={styles.rejectButton} onPress={() => setOcrData(null)}>
+                          <MaterialIcons name="refresh" size={24} color={THEME.colors.expense} />
+                       </TouchableOpacity>
+                    </View>
+                 </BlurView>
+              </View>
+           )}
         </SafeAreaView>
       </CameraView>
     </View>
@@ -171,39 +193,59 @@ export default function ScannerScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  bg: { flex: 1, width: '100%' },
-  safeArea: { flex: 1, backgroundColor: 'rgba(0,0,0,0.1)' },
-  
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  iconBtn: { width: 44, height: 44, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  camera: { flex: 1 },
+  safe: { flex: 1 },
 
-  frameContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  frame: { width: '85%', aspectRatio: 3/4, borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)', borderRadius: 20, overflow: 'hidden' },
-  scanLine: { width: '100%', height: 4, backgroundColor: '#1e3b8a', elevation: 15, shadowColor: '#1e3b8a', shadowOpacity: 1, shadowRadius: 10, top: '25%' },
-  instructionBox: { backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25, marginTop: 30 },
-  instruction: { color: '#FFF', fontSize: 13, fontWeight: '600' },
+  permissionIcon: { width: 100, height: 100, borderRadius: 50, backgroundColor: `${THEME.colors.secondary}10`, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  permissionTitle: { ...THEME.typography.h2, color: '#FFF', marginBottom: 12 },
+  permissionSub: { ...THEME.typography.body, color: THEME.colors.textTertiary, textAlign: 'center', marginBottom: 40 },
+  grantBtn: { backgroundColor: THEME.colors.secondary, paddingVertical: 16, paddingHorizontal: 40, borderRadius: 16 },
+  grantTxt: { color: '#FFF', fontWeight: '900', fontSize: 16 },
 
-  captureBtn: { alignSelf: 'center', marginBottom: 40 },
-  captureCircleOuter: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center', padding: 5, borderWidth: 4, borderColor: '#FFF' },
-  captureCircleInner: { width: '100%', height: '100%', borderRadius: 35, backgroundColor: '#FFF' },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10 },
+  backButton: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  titleArea: { alignItems: 'center' },
+  titleMain: { color: '#FFF', fontSize: 17, fontWeight: '900' },
+  titleSub: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  torchButton: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
 
-  sheet: { backgroundColor: '#FFF', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40, elevation: 25 },
-  handle: { width: 48, height: 5, backgroundColor: '#e2e8f0', borderRadius: 3, alignSelf: 'center', marginBottom: 24 },
-  sheetHeader: { flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 24 },
-  sheetIconBox: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(30,59,138,0.08)', alignItems: 'center', justifyContent: 'center' },
-  sheetTitle: { fontSize: 22, fontWeight: '800', color: '#0f172a' },
-  sheetSub: { fontSize: 14, color: '#64748b', fontWeight: '500' },
+  frameWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  viewport: { width: width * 0.8, aspectRatio: 3/4, borderRadius: 32, position: 'relative', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  corner: { position: 'absolute', width: 40, height: 40, borderColor: THEME.colors.secondary, borderWidth: 4 },
+  tl: { top: 32, left: 32, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 16 },
+  tr: { top: 32, right: 32, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 16 },
+  bl: { bottom: 32, left: 32, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 16 },
+  br: { bottom: 32, right: 32, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 16 },
+  scanLine: { width: '100%', height: 4, position: 'absolute', top: '20%' },
+  tipBox: { backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: 40 },
+  tipText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 28 },
-  gridBox: { width: '48%', backgroundColor: '#f8fafc', padding: 18, borderRadius: 18, borderWidth: 1, borderColor: '#f1f5f9' },
-  gridBoxFull: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#eff6ff', borderColor: '#dbeafe' },
-  gridLabel: { fontSize: 10, fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.5 },
-  gridVal: { fontSize: 15, fontWeight: '700', color: '#1e293b' },
-  gridAm: { fontSize: 26, fontWeight: '900', color: '#1e3b8a' },
+  bottomArea: { height: 160, alignItems: 'center', justifyContent: 'center' },
+  shutter: { width: 84, height: 84, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 42, alignItems: 'center', justifyContent: 'center', padding: 6, borderWidth: 4, borderColor: '#FFF' },
+  shutterInside: { width: '100%', height: '100%', backgroundColor: '#FFF', borderRadius: 40 },
+  shutterRing: { width: '100%', height: '100%', borderRadius: 40, padding: 4 },
 
-  actions: { flexDirection: 'row', gap: 16 },
-  confirmBtn: { flex: 1, flexDirection: 'row', backgroundColor: '#1e3b8a', height: 60, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 10, elevation: 8 },
-  confirmText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
-  editBtn: { width: 60, height: 60, backgroundColor: '#fee2e2', borderRadius: 18, alignItems: 'center', justifyContent: 'center' }
+  processingCard: { position: 'absolute', bottom: 40, alignSelf: 'center', backgroundColor: '#FFF', borderRadius: 24, padding: 32, alignItems: 'center', gap: 16, ...THEME.shadows.strong },
+  processingTxt: { ...THEME.typography.h3, fontSize: 16, color: THEME.colors.primary },
+
+  resultSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 8 },
+  glassContainer: { borderRadius: 32, padding: 24, paddingBottom: 40, overflow: 'hidden' },
+  sheetHandle: { width: 48, height: 5, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 3, alignSelf: 'center', marginBottom: 24 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 28 },
+  checkIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: `${THEME.colors.secondary}10`, alignItems: 'center', justifyContent: 'center' },
+  sheetTitle: { ...THEME.typography.h3, fontSize: 20 },
+  sheetSub: { ...THEME.typography.caption, color: THEME.colors.textTertiary, marginTop: 2 },
+
+  dataGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
+  dataCell: { width: (width - 64) / 2, backgroundColor: 'rgba(255,255,255,0.6)', padding: 16, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)' },
+  wideCell: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(59, 130, 246, 0.05)', borderColor: 'rgba(59, 130, 246, 0.1)' },
+  dataLabel: { ...THEME.typography.label, fontSize: 10, color: THEME.colors.textTertiary },
+  dataValue: { ...THEME.typography.body, fontWeight: '800', fontSize: 15, marginTop: 4, color: THEME.colors.text },
+  amountText: { ...THEME.typography.h1, fontSize: 28, color: THEME.colors.secondary },
+
+  sheetActions: { flexDirection: 'row', gap: 14 },
+  confirmButton: { flex: 1, borderRadius: 18, overflow: 'hidden', height: 62, ...THEME.shadows.medium },
+  confirmGradient: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  confirmTxt: { color: '#FFF', fontSize: 16, fontWeight: '900' },
+  rejectButton: { width: 62, height: 62, borderRadius: 18, backgroundColor: 'rgba(244, 63, 94, 0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(244, 63, 94, 0.2)' }
 });

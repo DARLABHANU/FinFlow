@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useAuthStore } from '../../store/authStore';
 import apiClient, { setAuthToken } from '../../api/apiClient';
+import { THEME } from '../../theme/theme';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }: any) {
   const { login, rememberedEmail, rememberedPassword, setRememberedCredentials } = useAuthStore();
   const [email, setEmail] = useState(rememberedEmail || '');
   const [password, setPassword] = useState(rememberedPassword || '');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (rememberedEmail) setEmail(rememberedEmail);
@@ -23,46 +28,36 @@ export default function LoginScreen({ navigation }: any) {
     
     try {
       if (!finalEmail || !finalPass) {
-        return Alert.alert('Error', 'Please enter your email and password.');
+        return Alert.alert('Missing Info', 'Please provide both email and password.');
       }
+      setLoading(true);
       const response = await apiClient.post('/auth/login', { email: finalEmail, password: finalPass });
       setAuthToken(response.data.accessToken);
       
-      // If biometric was enabled for this user, remember them on this device
       if (response.data.user.isBiometricEnabled) {
         setRememberedCredentials(finalEmail, finalPass);
       }
       
       login(response.data.user, response.data.accessToken);
     } catch (error: any) {
-      console.log('Login failed', error);
-      Alert.alert('Login Error', error?.response?.data?.error || 'Invalid credentials');
+      Alert.alert('Login Failed', error?.response?.data?.error || 'Check your credentials and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleBiometricAuth = async () => {
     try {
       if (!rememberedEmail || !rememberedPassword) {
-        return Alert.alert('Note', 'Please log in with your password once to enable biometric login.');
+        return Alert.alert('Action Required', 'Log in once with your password to enable biometric access.');
       }
 
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) return Alert.alert('Unavailable', 'Biometrics not configured.');
       
-      if (!hasHardware || !isEnrolled) {
-        return Alert.alert('Error', 'Biometrics not available.');
-      }
-      
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Login to FinFlow',
-      });
-
-      if (result.success) {
-         // Auto-login with saved credentials
-         handleLogin(rememberedEmail, rememberedPassword);
-      } else {
-         Alert.alert('Authentication Failed', 'Identity verification failed.');
-      }
+      const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Unlock FinFlow' });
+      if (result.success) handleLogin(rememberedEmail, rememberedPassword);
     } catch (e) {
       console.log('Biometric error', e);
     }
@@ -71,77 +66,69 @@ export default function LoginScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.inner}>
-        <View style={styles.card}>
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <MaterialIcons name="account-balance-wallet" size={32} color="#FFF" />
+        <View style={styles.heroSection}>
+           <LinearGradient colors={[THEME.colors.primary, THEME.colors.secondary]} style={styles.logoCircle}>
+              <MaterialIcons name="account-balance-wallet" size={40} color="#FFF" />
+           </LinearGradient>
+           <Text style={styles.brandName}>FinFlow</Text>
+           <Text style={styles.heroText}>Your Intelligent Financial Partner</Text>
+        </View>
+
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>Welcome Back</Text>
+          <Text style={styles.formSubtitle}>Please sign in to continue</Text>
+
+          <View style={styles.inputStack}>
+            <View style={styles.inputWrapper}>
+              <MaterialIcons name="alternate-email" size={20} color={THEME.colors.textTertiary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor={THEME.colors.textTertiary}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
             </View>
-            <Text style={styles.brandTitle}>FinFlow</Text>
-            <Text style={styles.title}>Welcome back</Text>
-            <Text style={styles.subtitle}>Enter your credentials to access your account</Text>
+
+            <View style={styles.inputWrapper}>
+              <MaterialIcons name="lock-outline" size={20} color={THEME.colors.textTertiary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor={THEME.colors.textTertiary}
+                secureTextEntry={!isPasswordVisible}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
+                <MaterialIcons name={isPasswordVisible ? "visibility" : "visibility-off"} size={20} color={THEME.colors.textTertiary} />
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="mail" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="name@example.com"
-                  placeholderTextColor="#94a3b8"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </View>
-            </View>
+          <TouchableOpacity style={styles.forgotBtn}>
+             <Text style={styles.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
 
-            <View style={styles.inputGroup}>
-              <View style={styles.passwordHeader}>
-                <Text style={styles.label}>Password</Text>
-                <TouchableOpacity>
-                  <Text style={styles.forgotPassword}>Forgot?</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="lock" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94a3b8"
-                  secureTextEntry={!isPasswordVisible}
-                  value={password}
-                  onChangeText={setPassword}
-                />
-                <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.eyeIcon}>
-                  <MaterialIcons name={isPasswordVisible ? "visibility" : "visibility-off"} size={20} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-            </View>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.mainBtn} onPress={() => handleLogin()} disabled={loading}>
+              <LinearGradient colors={[THEME.colors.primary, THEME.colors.secondary]} style={styles.gradientBtn} start={{x:0,y:0}} end={{x:1,y:0}}>
+                <Text style={styles.mainBtnText}>{loading ? 'Authenticating...' : 'Sign In'}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
 
-            <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin()}>
-                <Text style={styles.loginButtonText}>Log In</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricAuth}>
-                <MaterialIcons name="fingerprint" size={28} color="#1e3b8a" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.bioBtn} onPress={handleBiometricAuth}>
+               <MaterialIcons name="fingerprint" size={32} color={THEME.colors.primary} />
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.dividerContainer}>
-               <View style={styles.divider} />
-               <Text style={styles.dividerText}>NEW TO FINFLOW?</Text>
-               <View style={styles.divider} />
-            </View>
-
-            <View style={styles.signupContainer}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.signupLink}>Create account</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.footerLink}>
+             <Text style={styles.footerText}>Don't have an account? </Text>
+             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.linkText}>Create Account</Text>
+             </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -150,31 +137,33 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f6f8', justifyContent: 'center' },
-  inner: { flex: 1, justifyContent: 'center', padding: 20 },
-  card: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, shadowColor: '#1e3b8a', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
-  header: { alignItems: 'center', marginBottom: 30, marginTop: 20 },
-  iconContainer: { width: 64, height: 64, backgroundColor: '#1e3b8a', borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  brandTitle: { color: '#1e3b8a', fontSize: 24, fontWeight: 'bold' },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#0f172a', marginTop: 8 },
-  subtitle: { fontSize: 14, color: '#64748b', marginTop: 8 },
-  form: { paddingBottom: 20 },
-  inputGroup: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 8 },
-  passwordHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  forgotPassword: { fontSize: 12, fontWeight: '600', color: '#1e3b8a' },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', height: 56 },
-  inputIcon: { marginLeft: 16, marginRight: 8 },
-  input: { flex: 1, height: '100%', fontSize: 16, color: '#0f172a' },
-  eyeIcon: { padding: 16 },
-  buttonRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
-  loginButton: { flex: 1, backgroundColor: '#1e3b8a', height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  loginButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  biometricButton: { width: 56, height: 56, backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center' },
-  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 32 },
-  divider: { flex: 1, height: 1, backgroundColor: '#e2e8f0' },
-  dividerText: { marginHorizontal: 16, fontSize: 12, color: '#64748b', fontWeight: 'bold' },
-  signupContainer: { flexDirection: 'row', justifyContent: 'center' },
-  signupText: { color: '#475569', fontSize: 14 },
-  signupLink: { color: '#1e3b8a', fontSize: 14, fontWeight: 'bold' }
+  container: { flex: 1, backgroundColor: THEME.colors.background },
+  inner: { flex: 1, padding: 24, justifyContent: 'center' },
+  heroSection: { alignItems: 'center', marginBottom: 40 },
+  logoCircle: { width: 80, height: 80, borderRadius: 28, alignItems: 'center', justifyContent: 'center', ...THEME.shadows.lg },
+  brandName: { ...THEME.typography.h1, marginTop: 16, letterSpacing: -1 },
+  heroText: { ...THEME.typography.caption, color: THEME.colors.textSecondary, marginTop: 4 },
+
+  formCard: { backgroundColor: THEME.colors.surface, borderRadius: THEME.roundness.xl, padding: 24, ...THEME.shadows.md, borderWidth: 1, borderColor: THEME.colors.border },
+  formTitle: { ...THEME.typography.h2, fontSize: 22 },
+  formSubtitle: { ...THEME.typography.caption, color: THEME.colors.textTertiary, marginTop: 4, marginBottom: 32 },
+
+  inputStack: { gap: 16 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.colors.background, borderRadius: 14, height: 56, paddingHorizontal: 16 },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, ...THEME.typography.body, fontSize: 15, color: THEME.colors.text },
+  eyeIcon: { padding: 4 },
+
+  forgotBtn: { alignSelf: 'flex-end', marginTop: 12, marginBottom: 32 },
+  forgotText: { ...THEME.typography.caption, color: THEME.colors.primary, fontWeight: '800' },
+
+  actionRow: { flexDirection: 'row', gap: 12 },
+  mainBtn: { flex: 1, height: 56, borderRadius: 14, overflow: 'hidden' },
+  gradientBtn: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
+  mainBtnText: { color: '#FFF', fontSize: 16, fontWeight: '900' },
+  bioBtn: { width: 56, height: 56, borderRadius: 14, backgroundColor: `${THEME.colors.primary}10`, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: `${THEME.colors.primary}20` },
+
+  footerLink: { flexDirection: 'row', justifyContent: 'center', marginTop: 40 },
+  footerText: { ...THEME.typography.body, fontSize: 14, color: THEME.colors.textSecondary },
+  linkText: { ...THEME.typography.body, fontSize: 14, color: THEME.colors.primary, fontWeight: '800' }
 });

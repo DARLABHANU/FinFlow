@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   isAuthenticated: false,
   isPrivacyMode: false,
-  currency: 'USD',
+  currency: 'INR',
   rememberedEmail: null,
   rememberedPassword: null,
   login: (user, token) => set({ user, token, isAuthenticated: true }),

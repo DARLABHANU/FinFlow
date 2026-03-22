@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useAuthStore } from '../../store/authStore';
 import apiClient from '../../api/apiClient';
+import { THEME } from '../../theme/theme';
 
 export default function RegisterScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
-  const login = useAuthStore((state) => state.login);
+  const [loading, setLoading] = useState(false);
 
   const handleBiometricToggle = async (value: boolean) => {
     if (value) {
@@ -39,102 +41,102 @@ export default function RegisterScreen({ navigation }: any) {
   const handleRegister = async () => {
     try {
       if (!name || !email || !password) {
-        Alert.alert('Error', 'Please fill in all fields');
+        Alert.alert('Missing Fields', 'Please complete all fields to join.');
         return;
       }
-      const response = await apiClient.post('/auth/register', { name, email, password, isBiometricEnabled });
-      Alert.alert('Success', 'Account created! Please log in.', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
+      setLoading(true);
+      await apiClient.post('/auth/register', { name, email, password, isBiometricEnabled });
+      Alert.alert('Success', 'Account created! Please log in to start your journey.', [
+        { text: 'Let’s Go', onPress: () => navigation.navigate('Login') }
       ]);
     } catch (error: any) {
-      console.log('Register failed', error);
-      Alert.alert('Registration Failed', error?.response?.data?.error || error.message);
+      Alert.alert('Registration Failed', error?.response?.data?.error || 'Unable to create account');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <MaterialIcons name="arrow-back" size={24} color="#1e3b8a" />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <MaterialIcons name="arrow-back" size={24} color={THEME.colors.text} />
           </TouchableOpacity>
           
           <View style={styles.header}>
-            <Text style={styles.title}>Create your account</Text>
-            <Text style={styles.subtitle}>Join FinFlow to start managing your finances professionally.</Text>
+            <Text style={styles.title}>Get Started</Text>
+            <Text style={styles.subtitle}>Join thousands managing their wealth smarter.</Text>
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="person" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="John Doe"
-                  placeholderTextColor="#94a3b8"
-                  value={name}
-                  onChangeText={setName}
-                />
-              </View>
+          <View style={styles.formContainer}>
+            <View style={styles.inputWrapper}>
+              <MaterialIcons name="person-outline" size={20} color={THEME.colors.textTertiary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Full Name"
+                placeholderTextColor={THEME.colors.textTertiary}
+                value={name}
+                onChangeText={setName}
+              />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="mail" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="name@example.com"
-                  placeholderTextColor="#94a3b8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
+            <View style={styles.inputWrapper}>
+              <MaterialIcons name="alternate-email" size={20} color={THEME.colors.textTertiary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor={THEME.colors.textTertiary}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputContainer}>
-                <MaterialIcons name="lock" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94a3b8"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                />
-              </View>
+            <View style={styles.inputWrapper}>
+              <MaterialIcons name="lock-outline" size={20} color={THEME.colors.textTertiary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Creating Password"
+                placeholderTextColor={THEME.colors.textTertiary}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
             </View>
 
-            <View style={styles.bioGroup}>
-               <View>
-                 <Text style={styles.bioTitle}>Enable Biometric Login</Text>
-                 <Text style={styles.bioSub}>Use Fingerprint or FaceID to sign in</Text>
+            <View style={styles.bioWidget}>
+               <View style={styles.bioTextContainer}>
+                  <Text style={styles.bioTitle}>Biometric Security</Text>
+                  <Text style={styles.bioSub}>Easy login with FaceID/Fingerprint</Text>
                </View>
                <Switch 
                  value={isBiometricEnabled}
                  onValueChange={handleBiometricToggle}
-                 trackColor={{ true: '#1e3b8a', false: '#cbd5e1' }}
+                 trackColor={{ true: THEME.colors.primary, false: THEME.colors.border }}
+                 thumbColor="#FFF"
                />
             </View>
 
-            <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-              <Text style={styles.registerButtonText}>Create Account</Text>
+            <TouchableOpacity activeOpacity={0.9} style={styles.submitBtn} onPress={handleRegister} disabled={loading}>
+              <LinearGradient 
+                colors={[THEME.colors.primary, THEME.colors.secondary]} 
+                style={styles.gradientBtn}
+                start={{x:0,y:0}} end={{x:1,y:0}}
+              >
+                <Text style={styles.submitBtnText}>{loading ? 'Creating Account...' : 'Continue'}</Text>
+                <MaterialIcons name="arrow-forward" size={20} color="#FFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Already have an account? </Text>
+          <View style={styles.loginRow}>
+            <Text style={styles.loginText}>Already a member? </Text>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.loginLink}>Log in</Text>
+              <Text style={styles.loginLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -142,24 +144,28 @@ export default function RegisterScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f6f8' },
-  scroll: { padding: 24, paddingTop: 40, flexGrow: 1, justifyContent: 'center' },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1e3b8a10', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  header: { marginBottom: 30 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#0f172a', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#475569', lineHeight: 24 },
-  form: { },
-  inputGroup: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#0f172a', marginBottom: 8, marginLeft: 4 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', height: 56 },
-  inputIcon: { marginLeft: 16, marginRight: 8 },
-  input: { flex: 1, height: '100%', fontSize: 16, color: '#0f172a' },
-  registerButton: { backgroundColor: '#1e3b8a', height: 56, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  registerButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  bioGroup: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFF', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 20 },
-  bioTitle: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
-  bioSub: { fontSize: 12, color: '#64748b' },
-  loginContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 40 },
-  loginText: { color: '#475569', fontSize: 14 },
-  loginLink: { color: '#1e3b8a', fontSize: 14, fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: THEME.colors.background },
+  scroll: { padding: 24, paddingBottom: 60 },
+  backBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: THEME.colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 32, ...THEME.shadows.sm },
+  header: { marginBottom: 40 },
+  title: { ...THEME.typography.h1, fontSize: 32, letterSpacing: -1 },
+  subtitle: { ...THEME.typography.body, color: THEME.colors.textSecondary, marginTop: 8, lineHeight: 22 },
+
+  formContainer: { gap: 16 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.colors.surface, borderRadius: 14, height: 56, paddingHorizontal: 16, borderWidth: 1, borderColor: THEME.colors.border },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, ...THEME.typography.body, fontSize: 15, color: THEME.colors.text },
+
+  bioWidget: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: `${THEME.colors.primary}05`, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: `${THEME.colors.primary}10`, marginVertical: 8 },
+  bioTextContainer: { flex: 1 },
+  bioTitle: { ...THEME.typography.body, fontSize: 16, fontWeight: '700', color: THEME.colors.text },
+  bioSub: { ...THEME.typography.caption, color: THEME.colors.textTertiary, marginTop: 2 },
+
+  submitBtn: { height: 56, borderRadius: 14, overflow: 'hidden', marginTop: 10 },
+  gradientBtn: { width: '100%', height: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  submitBtnText: { color: '#FFF', fontSize: 17, fontWeight: '900' },
+
+  loginRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 40 },
+  loginText: { ...THEME.typography.body, fontSize: 14, color: THEME.colors.textSecondary },
+  loginLink: { ...THEME.typography.body, fontSize: 14, color: THEME.colors.primary, fontWeight: '800' },
 });

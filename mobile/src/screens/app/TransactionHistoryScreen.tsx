@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTransactionStore } from '../../store/transactionStore';
 import { useAuthStore } from '../../store/authStore';
+import { THEME } from '../../theme/theme';
 
 export default function TransactionHistoryScreen({ navigation }: any) {
   const { transactions, fetchTransactions, deleteApiTransaction } = useTransactionStore();
@@ -14,13 +15,11 @@ export default function TransactionHistoryScreen({ navigation }: any) {
   
   const curSymbol = currency === 'USD' ? '$' : '₹';
 
-  // Categories for chips
-  const categoryChips = ['All', 'Shop', 'Food', 'Travel', 'Bills', 'Salary', 'Business'];
+  const categoryChips = ['All', 'Shop', 'Food', 'Travel', 'Bills', 'Salary', 'Business', 'Health', 'Invest', 'Others'];
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      const matchesSearch = t.note.toLowerCase().includes(search.toLowerCase()) || 
-                             t.category.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = (t.note || t.category).toLowerCase().includes(search.toLowerCase());
       const matchesCategory = activeCategory === 'All' || t.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
@@ -34,8 +33,8 @@ export default function TransactionHistoryScreen({ navigation }: any) {
 
   const handleDelete = (id: string) => {
     Alert.alert(
-      'Delete Transaction',
-      'Are you sure you want to remove this record?',
+      'Delete Record',
+      'This action cannot be undone. Are you sure?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Delete', style: 'destructive', onPress: () => deleteApiTransaction(id) }
@@ -65,78 +64,89 @@ export default function TransactionHistoryScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color="#0f172a" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={24} color={THEME.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>History</Text>
-        <TouchableOpacity style={styles.iconBtn}>
-          <MaterialIcons name="filter-list" size={24} color="#0f172a" />
+        <Text style={styles.headerTitle}>Transaction History</Text>
+        <TouchableOpacity style={styles.filterBtn}>
+          <MaterialIcons name="tune" size={22} color={THEME.colors.primary} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.contentHeader}>
-        <View style={styles.searchBox}>
-          <MaterialIcons name="search" size={20} color="#94a3b8" />
+      <View style={styles.topSticky}>
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <MaterialIcons name="search" size={20} color={THEME.colors.textTertiary} />
           <TextInput 
              style={styles.searchInput} 
-             placeholder="Search by note or category..." 
-             placeholderTextColor="#94a3b8" 
+             placeholder="Search transactions..." 
+             placeholderTextColor={THEME.colors.textTertiary} 
              value={search}
              onChangeText={setSearch}
           />
           {search.length > 0 && (
              <TouchableOpacity onPress={() => setSearch('')}>
-                <MaterialIcons name="close" size={18} color="#94a3b8" />
+                <MaterialIcons name="cancel" size={20} color={THEME.colors.textTertiary} />
              </TouchableOpacity>
           )}
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ gap: 8 }}>
+        {/* Categories */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={{ paddingRight: 40, gap: 10 }}>
           {categoryChips.map(c => (
              <TouchableOpacity 
-              key={c} 
-              style={[styles.chip, activeCategory === c && styles.activeChip]}
-              onPress={() => setActiveCategory(c)}
+               key={c} 
+               style={[styles.chip, activeCategory === c && styles.activeChip]}
+               onPress={() => setActiveCategory(c)}
              >
-                <Text style={activeCategory === c ? styles.activeChipText : styles.chipText}>{c}</Text>
+                <Text style={[styles.chipText, activeCategory === c && styles.activeChipText]}>{c}</Text>
              </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
       <ScrollView 
-        contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.colors.primary} />}
       >
         {Object.keys(grouped).length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="history" size={64} color="#e2e8f0" />
-            <Text style={styles.emptyText}>No records found</Text>
+          <View style={styles.emptyWrap}>
+             <View style={styles.emptyIconCircle}>
+               <MaterialIcons name="receipt-long" size={48} color={THEME.colors.border} />
+             </View>
+             <Text style={styles.emptyText}>No transactions found</Text>
+             <Text style={styles.emptySub}>Try adjusting your filters or search keywords</Text>
           </View>
         ) : (
           Object.keys(grouped).map(date => (
-            <View key={date} style={styles.group}>
-              <Text style={styles.dateLabel}>{date}</Text>
+            <View key={date} style={styles.dayGroup}>
+              <View style={styles.dateHeader}>
+                 <View style={styles.dateLine} />
+                 <Text style={styles.dateText}>{date}</Text>
+                 <View style={styles.dateLine} />
+              </View>
               {grouped[date].map(t => (
-                <View key={t.id} style={styles.card}>
-                  <View style={[styles.iconBox, { backgroundColor: t.type === 'Income' ? '#eff6ff' : '#fff1f2' }]}>
+                <View key={t.id} style={styles.transactionCard}>
+                  <View style={[styles.iconBox, { backgroundColor: t.type === 'Income' ? '#f0fdf4' : '#fff1f2' }]}>
                     <MaterialIcons 
-                      name={t.type === 'Income' ? 'call-received' : 'call-made'} 
-                      size={20} 
-                      color={t.type === 'Income' ? '#2563eb' : '#e11d48'} 
+                      name={t.type === 'Income' ? 'south-west' : 'north-east'} 
+                      size={22} 
+                      color={t.type === 'Income' ? THEME.colors.success : THEME.colors.danger} 
                     />
                   </View>
                   <View style={styles.cardInfo}>
-                    <Text style={styles.note} numberOfLines={1}>{t.note || t.category}</Text>
-                    <Text style={styles.category}>{t.category} • {new Date(t.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
+                    <Text style={styles.noteLabel} numberOfLines={1}>{t.note || t.category}</Text>
+                    <Text style={styles.categorySub}>{t.category} • {new Date(t.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
                   </View>
                   <View style={styles.cardRight}>
-                    <Text style={[styles.amount, { color: t.type === 'Income' ? '#16a34a' : '#0f172a' }]}>
-                      {t.type === 'Income' ? '+' : '-'}{curSymbol}{t.amount.toFixed(2)}
+                    <Text style={[styles.amountText, { color: t.type === 'Income' ? THEME.colors.success : THEME.colors.text }]}>
+                      {t.type === 'Income' ? '+' : '-'}{curSymbol}{t.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </Text>
-                    <TouchableOpacity onPress={() => handleDelete(t.id)} style={styles.deleteBtn}>
-                      <MaterialIcons name="delete-outline" size={18} color="#94a3b8" />
+                    <TouchableOpacity onPress={() => handleDelete(t.id)} style={styles.actionBtn}>
+                      <MaterialIcons name="delete-sweep" size={18} color={THEME.colors.textTertiary} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -150,32 +160,39 @@ export default function TransactionHistoryScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, backgroundColor: '#FFF' },
-  iconBtn: { padding: 4 },
-  title: { fontSize: 20, fontWeight: '900', color: '#0f172a' },
+  container: { flex: 1, backgroundColor: THEME.colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: THEME.colors.surface },
+  backBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: THEME.colors.background, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { ...THEME.typography.h3, fontSize: 18 },
+  filterBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: `${THEME.colors.primary}10`, alignItems: 'center', justifyContent: 'center' },
 
-  contentHeader: { backgroundColor: '#FFF', paddingBottom: 20 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 16, marginHorizontal: 20, paddingHorizontal: 16, height: 50 },
-  searchInput: { flex: 1, marginLeft: 10, fontSize: 16, color: '#1e293b', fontWeight: '500' },
-  chipsRow: { marginTop: 20, paddingHorizontal: 20 },
-  chip: { paddingHorizontal: 16, height: 38, borderRadius: 19, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#f1f5f9' },
-  activeChip: { backgroundColor: '#1e3b8a', borderColor: '#1e3b8a' },
-  chipText: { fontSize: 13, fontWeight: '700', color: '#64748b' },
-  activeChipText: { fontSize: 13, fontWeight: '700', color: '#FFF' },
+  topSticky: { backgroundColor: THEME.colors.surface, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: THEME.colors.border },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.colors.background, borderRadius: 16, marginHorizontal: 20, paddingHorizontal: 16, height: 52, marginTop: 4 },
+  searchInput: { flex: 1, marginLeft: 12, ...THEME.typography.body, fontSize: 16, color: THEME.colors.text },
+  
+  chipScroll: { marginTop: 20, paddingHorizontal: 20 },
+  chip: { paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: THEME.colors.background, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: THEME.colors.border },
+  activeChip: { backgroundColor: THEME.colors.primary, borderColor: THEME.colors.primary, ...THEME.shadows.sm },
+  chipText: { ...THEME.typography.caption, fontSize: 13, fontWeight: '700', color: THEME.colors.textSecondary },
+  activeChipText: { color: '#FFF' },
 
-  list: { padding: 20, paddingBottom: 40 },
-  group: { marginBottom: 25 },
-  dateLabel: { fontSize: 11, fontWeight: '900', color: '#94a3b8', letterSpacing: 1.5, marginBottom: 15, textTransform: 'uppercase' },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', padding: 12, borderRadius: 20, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 1 },
-  iconBox: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  cardInfo: { flex: 1, marginHorizontal: 12 },
-  note: { fontSize: 15, fontWeight: 'bold', color: '#1e293b' },
-  category: { fontSize: 12, color: '#94a3b8', fontWeight: '500', marginTop: 2 },
-  cardRight: { alignItems: 'flex-end', justifyContent: 'space-between', height: 44 },
-  amount: { fontSize: 15, fontWeight: '900' },
-  deleteBtn: { padding: 2 },
+  listContainer: { padding: 20, paddingBottom: 60 },
+  dayGroup: { marginBottom: 32 },
+  dateHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 20 },
+  dateLine: { flex: 1, height: 1, backgroundColor: THEME.colors.border },
+  dateText: { ...THEME.typography.label, color: THEME.colors.textTertiary },
 
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
-  emptyText: { marginTop: 16, fontSize: 14, fontWeight: 'bold', color: '#94a3b8' }
+  transactionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.colors.surface, padding: 14, borderRadius: THEME.roundness.xl, marginBottom: 12, ...THEME.shadows.sm, borderWidth: 1, borderColor: THEME.colors.border },
+  iconBox: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  cardInfo: { flex: 1, marginHorizontal: 16 },
+  noteLabel: { ...THEME.typography.body, fontWeight: '800', fontSize: 16, color: THEME.colors.text },
+  categorySub: { ...THEME.typography.caption, color: THEME.colors.textSecondary, marginTop: 2 },
+  cardRight: { alignItems: 'flex-end', justifyContent: 'center', gap: 6 },
+  amountText: { fontSize: 16, fontWeight: '900' },
+  actionBtn: { padding: 4 },
+
+  emptyWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 80, gap: 12 },
+  emptyIconCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: THEME.colors.surface, alignItems: 'center', justifyContent: 'center', ...THEME.shadows.sm },
+  emptyText: { ...THEME.typography.h3, color: THEME.colors.text },
+  emptySub: { ...THEME.typography.body, fontSize: 14, color: THEME.colors.textTertiary, textAlign: 'center', paddingHorizontal: 40 }
 });

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTransactionStore } from '../../store/transactionStore';
 import { useAuthStore } from '../../store/authStore';
+import { THEME } from '../../theme/theme';
 
 export default function AddTransactionScreen({ navigation }: any) {
   const [type, setType] = useState<'Income' | 'Expense'>('Expense');
@@ -17,7 +19,7 @@ export default function AddTransactionScreen({ navigation }: any) {
   const curSymbol = currency === 'USD' ? '$' : '₹';
 
   const formatDate = (d: Date) => {
-    return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   const handleSave = async () => {
@@ -39,112 +41,135 @@ export default function AddTransactionScreen({ navigation }: any) {
   };
 
   const expenseCategories = [
-    { name: 'Shop', icon: 'shopping-cart' },
-    { name: 'Food', icon: 'restaurant' },
-    { name: 'Travel', icon: 'directions-car' },
-    { name: 'Bills', icon: 'payments' },
+    { name: 'Shop', icon: 'shopping-cart', color: '#3b82f6' },
+    { name: 'Food', icon: 'restaurant', color: '#10b981' },
+    { name: 'Travel', icon: 'directions-car', color: '#8b5cf6' },
+    { name: 'Bills', icon: 'payments', color: '#ef4444' },
+    { name: 'Health', icon: 'medical-services', color: '#f43f5e' },
+    { name: 'Others', icon: 'more-horiz', color: '#64748b' },
   ];
 
   const incomeSources = [
-    { name: 'Salary', icon: 'account-balance-wallet' },
-    { name: 'Business', icon: 'business' },
-    { name: 'Gift', icon: 'card-giftcard' },
-    { name: 'Investment', icon: 'trending-up' },
+    { name: 'Salary', icon: 'account-balance-wallet', color: '#8b5cf6' },
+    { name: 'Business', icon: 'business', color: '#3b82f6' },
+    { name: 'Gift', icon: 'card-giftcard', color: '#f59e0b' },
+    { name: 'Invest', icon: 'trending-up', color: '#10b981' },
   ];
 
   const currentCategories = type === 'Expense' ? expenseCategories : incomeSources;
 
-  // Reset category when type changes to ensure it's valid for the current list
   useEffect(() => {
     setCategory(type === 'Expense' ? 'Food' : 'Salary');
   }, [type]);
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()}>
-          <MaterialIcons name="close" size={24} color="#0f172a" />
+          <MaterialIcons name="close" size={24} color={THEME.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Add Transaction</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Scanner')} style={styles.closeBtn}>
-          <MaterialIcons name="camera-alt" size={24} color="#1e3b8a" />
+        <Text style={styles.title}>New Entry</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Scanner')} style={styles.scannerBtn}>
+          <MaterialIcons name="camera-alt" size={22} color={THEME.colors.primary} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.toggleContainer}>
-          <TouchableOpacity 
-            style={[styles.toggleBtn, type === 'Income' && styles.activeToggle]}
-            onPress={() => setType('Income')}
-          >
-            <Text style={[styles.toggleText, type === 'Income' && styles.activeToggleText]}>Income</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.toggleBtn, type === 'Expense' && styles.activeToggle]}
-            onPress={() => setType('Expense')}
-          >
-            <Text style={[styles.toggleText, type === 'Expense' && styles.activeToggleText]}>Expense</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.amountContainer}>
-          <Text style={styles.amountLabel}>Enter Amount</Text>
-          <View style={styles.amountRow}>
-            <Text style={styles.currency}>{curSymbol}</Text>
-            <TextInput
-              style={styles.amountInput}
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="0.00"
-            />
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>{type === 'Expense' ? 'SELECT CATEGORY' : 'SELECT INCOME SOURCE'}</Text>
-        <View style={styles.catGrid}>
-          {currentCategories.map((c: any) => (
-            <TouchableOpacity 
-              key={c.name} 
-              style={styles.catItem}
-              onPress={() => setCategory(c.name)}
-            >
-              <View style={[styles.catIconBox, category === c.name && styles.activeCatBox]}>
-                <MaterialIcons name={c.icon as any} size={24} color={category === c.name ? '#FFF' : '#64748b'} />
-              </View>
-              <Text style={[styles.catText, category === c.name && styles.activeCatText]}>{c.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.fieldContainer}>
-          <View style={styles.fieldRow}>
-            <View style={styles.fieldIcon}><MaterialIcons name="calendar-today" size={20} color="#1e3b8a" /></View>
-            <View style={styles.fieldInputGroup}>
-              <Text style={styles.fieldLabel}>Date</Text>
-              <Text style={styles.fieldVal}>{formatDate(date)}</Text>
-            </View>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* Amount Display */}
+          <View style={styles.amountContainer}>
+             <Text style={styles.amountLabel}>ENTER THE AMOUNT</Text>
+             <View style={styles.amountRow}>
+                <Text style={styles.currencySymbol}>{curSymbol}</Text>
+                <TextInput
+                  style={styles.amountInput}
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
+                  placeholder="0.00"
+                  placeholderTextColor="rgba(15, 23, 42, 0.2)"
+                  autoFocus
+                />
+             </View>
           </View>
 
-          <View style={styles.fieldRow}>
-            <View style={styles.fieldIcon}><MaterialIcons name="description" size={20} color="#1e3b8a" /></View>
-            <View style={styles.fieldInputGroup}>
-              <Text style={styles.fieldLabel}>Notes</Text>
-              <TextInput 
-                style={styles.noteInput} 
-                placeholder="What was this for?" 
-                value={note}
-                onChangeText={setNote}
-              />
-            </View>
+          {/* Type Toggle */}
+          <View style={styles.toggleRow}>
+             {['Income', 'Expense'].map((t: any) => (
+                <TouchableOpacity 
+                   key={t}
+                   style={[styles.toggleBtn, type === t && (t === 'Income' ? styles.toggleIncome : styles.toggleExpense)]}
+                   onPress={() => setType(t)}
+                >
+                   <Text style={[styles.toggleText, type === t && styles.activeToggleText]}>{t}</Text>
+                </TouchableOpacity>
+             ))}
           </View>
-        </View>
-      </ScrollView>
 
+          {/* Category Scroller */}
+          <Text style={styles.sectionTitle}>CATEGORY</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+            {currentCategories.map((c: any) => (
+              <TouchableOpacity 
+                key={c.name} 
+                style={styles.catItem}
+                onPress={() => setCategory(c.name)}
+              >
+                <View style={[styles.catIconBox, category === c.name && { backgroundColor: c.color }]}>
+                  <MaterialIcons name={c.icon as any} size={26} color={category === c.name ? '#0f172a' : c.color} />
+                </View>
+                <Text style={[styles.catLabel, category === c.name && styles.activeCatLabel]}>{c.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Form Fields */}
+          <View style={styles.form}>
+             <View style={styles.inputGroup}>
+                <View style={[styles.fieldIcon, { backgroundColor: '#f0f9ff' }]}>
+                   <MaterialIcons name="event" size={20} color="#0284c7" />
+                </View>
+                <View style={styles.fieldContent}>
+                   <Text style={styles.fieldLabel}>TRANSACTION DATE</Text>
+                   <Text style={styles.fieldValue}>{formatDate(date)}</Text>
+                </View>
+             </View>
+
+             <View style={styles.inputGroup}>
+                <View style={[styles.fieldIcon, { backgroundColor: '#fdf4ff' }]}>
+                   <MaterialIcons name="segment" size={20} color="#a21caf" />
+                </View>
+                <View style={styles.fieldContent}>
+                   <Text style={styles.fieldLabel}>ADD A NOTE</Text>
+                   <TextInput 
+                     style={styles.noteInput}
+                     placeholder="What was this for?"
+                     value={note}
+                     onChangeText={setNote}
+                     placeholderTextColor={THEME.colors.textTertiary}
+                   />
+                </View>
+             </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Save Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <MaterialIcons name="check-circle" size={24} color="#FFF" />
-          <Text style={styles.saveBtnText}>Save Transaction</Text>
+        <TouchableOpacity activeOpacity={0.9} onPress={handleSave}>
+          <LinearGradient
+             colors={[THEME.colors.primary, THEME.colors.secondary]}
+             style={styles.saveBtn}
+             start={{x:0, y:0}}
+             end={{x:1, y:1}}
+          >
+             <MaterialIcons name="check" size={24} color="#FFF" />
+             <Text style={styles.saveBtnText}>Record Transaction</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -152,41 +177,42 @@ export default function AddTransactionScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f6f8' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
-  closeBtn: { padding: 8, borderRadius: 20 },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#0f172a' },
+  container: { flex: 1, backgroundColor: THEME.colors.surface },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 15 },
+  closeBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: THEME.colors.background },
+  scannerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: `${THEME.colors.primary}10` },
+  title: { ...THEME.typography.h3, fontSize: 18 },
   
-  scroll: { padding: 16 },
-  toggleContainer: { flexDirection: 'row', backgroundColor: '#e2e8f0', borderRadius: 12, padding: 4, height: 48 },
-  toggleBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
-  activeToggle: { backgroundColor: '#FFF', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  toggleText: { fontSize: 14, fontWeight: '600', color: '#64748b' },
-  activeToggleText: { color: '#1e3b8a' },
+  scroll: { padding: 24 },
+  amountContainer: { alignItems: 'center', marginVertical: 32 },
+  amountLabel: { ...THEME.typography.label, color: THEME.colors.textTertiary, letterSpacing: 2 },
+  amountRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  currencySymbol: { fontSize: 36, fontWeight: '900', color: THEME.colors.primary, marginRight: 8 },
+  amountInput: { fontSize: 52, fontWeight: '900', color: THEME.colors.text, minWidth: 100, textAlign: 'center' },
 
-  amountContainer: { alignItems: 'center', paddingVertical: 40 },
-  amountLabel: { fontSize: 14, fontWeight: '500', color: '#64748b', marginBottom: 8 },
-  amountRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  currency: { fontSize: 32, fontWeight: 'bold', color: '#1e3b8a', marginRight: 4 },
-  amountInput: { fontSize: 48, fontWeight: 'bold', color: '#0f172a', minWidth: 100, textAlign: 'center' },
+  toggleRow: { flexDirection: 'row', backgroundColor: THEME.colors.background, borderRadius: THEME.roundness.lg, padding: 6, marginBottom: 40 },
+  toggleBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: THEME.roundness.md },
+  toggleIncome: { backgroundColor: THEME.colors.success },
+  toggleExpense: { backgroundColor: THEME.colors.danger },
+  toggleText: { ...THEME.typography.body, fontWeight: 'bold', color: THEME.colors.textSecondary },
+  activeToggleText: { color: '#0f172a' },
 
-  sectionTitle: { fontSize: 12, fontWeight: 'bold', color: '#64748b', letterSpacing: 1, marginBottom: 16 },
-  catGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  catItem: { alignItems: 'center' },
-  catIconBox: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  activeCatBox: { backgroundColor: '#1e3b8a', shadowColor: '#1e3b8a', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
-  catText: { fontSize: 12, fontWeight: '500', color: '#64748b' },
-  activeCatText: { color: '#1e3b8a', fontWeight: 'bold' },
+  sectionTitle: { ...THEME.typography.label, marginBottom: 20 },
+  catScroll: { marginHorizontal: -24, paddingHorizontal: 24, marginBottom: 40 },
+  catItem: { alignItems: 'center', marginRight: 24, gap: 10 },
+  catIconBox: { width: 62, height: 62, borderRadius: 18, backgroundColor: THEME.colors.background, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: THEME.colors.border },
+  catLabel: { ...THEME.typography.caption, fontWeight: '700', color: THEME.colors.textSecondary },
+  activeCatLabel: { color: THEME.colors.text },
 
-  fieldContainer: { gap: 16 },
-  fieldRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', padding: 16, borderRadius: 16, gap: 16 },
-  fieldIcon: { backgroundColor: 'rgba(30,59,138,0.1)', padding: 8, borderRadius: 8 },
-  fieldInputGroup: { flex: 1 },
-  fieldLabel: { fontSize: 10, fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' },
-  fieldVal: { fontSize: 14, fontWeight: '600', color: '#0f172a', marginTop: 4 },
-  noteInput: { fontSize: 14, fontWeight: '600', color: '#0f172a', padding: 0, marginTop: 4 },
+  form: { gap: 16 },
+  inputGroup: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.colors.background, padding: 16, borderRadius: THEME.roundness.lg, gap: 16, borderLeftWidth: 4, borderLeftColor: THEME.colors.primary },
+  fieldIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  fieldContent: { flex: 1 },
+  fieldLabel: { ...THEME.typography.label, fontSize: 9, color: THEME.colors.textSecondary },
+  fieldValue: { ...THEME.typography.body, fontSize: 15, fontWeight: '700', marginTop: 2, color: THEME.colors.text },
+  noteInput: { ...THEME.typography.body, fontSize: 15, fontWeight: '700', padding: 0, marginTop: 2, color: THEME.colors.text },
 
-  footer: { padding: 24, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#f1f5f9' },
-  saveBtn: { backgroundColor: '#1e3b8a', height: 56, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, shadowColor: '#1e3b8a', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
-  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' }
+  footer: { padding: 24, paddingBottom: 32, backgroundColor: THEME.colors.surface },
+  saveBtn: { height: 60, borderRadius: THEME.roundness.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, ...THEME.shadows.lg },
+  saveBtnText: { color: '#FFF', fontSize: 17, fontWeight: '900', letterSpacing: 0.5 }
 });
