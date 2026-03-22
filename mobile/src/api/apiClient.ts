@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// Replace with your local machine's IP address (e.g., http://192.168.1.x:5000) for physical devices
-// Or use 10.0.2.2 for Android Emulator
-const API_URL = 'http://192.168.1.5:5000/api';
+// Production Cloud URL (Render)
+const API_URL = 'https://finflow-tfzk.onrender.com/api';
+
+// For local testing: 'http://192.168.1.5:5000/api'
+// For Android Emulator: 'http://10.0.2.2:5000/api'
 
 const apiClient = axios.create({
   baseURL: API_URL,
