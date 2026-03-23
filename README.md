@@ -1,70 +1,108 @@
-# FinFlow - Financial Management App
+# 📈 FinFlow Pro: Premium Intelligent Finance Tracker
 
-## 🚀 Backend Deployment (Render)
-I have included a `render.yaml` file in the `backend/` directory to make your deployment to **Render.com** as easy as possible. 
+**FinFlow Pro** is a high-performance, premium financial management application designed to give users absolute control over their spending and income with an elite banking aesthetic. Built with a focus on speed, precision, and security, it leverages modern fintech design principles to deliver a world-class user experience.
 
-### Steps to Deploy:
-1. Push your `backend` folder to a GitHub repository.
-2. In Render, create a new **Blueprints** instance and connect your repo.
-3. Configure the following environment variables in the Render Dashboard:
-   - `MONGO_URI`: Your MongoDB Atlas connection string.
-   - `GOOGLE_API_KEY`: Your Gemini API key for receipt scanning.
-   - `JWT_SECRET`: A secure random string for authentication.
+---
 
-## 📱 Mobile App Install
-The app is currently building and installing natively on your phone via USB. This creates a standalone version separate from the Expo Go app.
+## 🛠️ Created By
+**Darla Bhanumurthy**
 
-## Architecture Overview
+---
 
-### Backend (Node.js/Express)
-- **Pattern**: Controller-Service-Repository.
-- **Security**: 
-  - JWT Access/Refresh tokens.
-  - AES-256 Encryption for sensitive data (Amount/Notes) using `crypto-js`.
-  - Rate limiting and Helmet for header security.
-  - Bcrypt for password hashing.
-- **Database**: MongoDB Atlas (Schema includes User, Transaction, Category).
+## 📱 Application Preview
 
-### Mobile (React Native + Expo)
-- **State Management**: Zustand.
-- **Offline Persistence**: SQLite (sync logic using `isSynced` flag).
-- **Security**: 
-  - `react-native-keychain` for access tokens.
-  - `react-native-sensitive-info` for refresh tokens.
-  - `expo-local-authentication` for fingerprint/FaceID.
-- **OCR**: Integrated `ocrService` for receipt scanning (Simulation of field extraction).
-- **Data Viz**: Victory Native for charts.
-- **Privacy Mode**: Global state toggle to blur/unblur financial data.
+<div align="center">
+  <!-- INSERT_SCREENSHOT_LOGIN -->
+  <img src="https://via.placeholder.com/200x400?text=Login+Screen" width="200" />
+  <!-- INSERT_SCREENSHOT_DASHBOARD -->
+  <img src="https://via.placeholder.com/200x400?text=Dashboard" width="200" />
+  <!-- INSERT_SCREENSHOT_ANALYTICS -->
+  <img src="https://via.placeholder.com/200x400?text=Analytics" width="200" />
+  <!-- INSERT_SCREENSHOT_SCANNER -->
+  <img src="https://via.placeholder.com/200x400?text=AI+Scanner" width="200" />
+</div>
 
-## Folder Structure
+> *Insert your actual screenshots in the placeholders above or replace the image links.*
 
-### Backend
-- `src/controllers`: Request handling.
-- `src/services`: Business logic.
-- `src/repositories`: Data access + Encryption.
-- `src/middleware`: Auth and security checks.
-- `src/utils`: JWT and Encryption helpers.
+---
 
-### Mobile
-- `src/navigation`: Auth and App stacks.
-- `src/screens`: UI screens (Dashboard, Scanning, etc.).
-- `src/store`: Global state (Auth, Transactions).
-- `src/database`: SQLite local storage logic.
+## ✨ Premium Features
 
-## How to Run
+### 💎 Elite "FinTech" Design System
+*   **Glassmorphic Assets**: Ultra-modern UI with blurred backgrounds and neon highlights.
+*   **Multi-Layered Depth**: Premium shadows and floating components for a tactile experience.
+*   **Responsive Typography**: Optimized scaling for every screen size using the **Standardized Elite Theme**.
 
-1. **Backend**:
-   - `cd backend`
-   - `npm install`
-   - Setup `.env` (MONGO_URI, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, ENCRYPTION_SECRET)
-   - `npm run dev`
+### 🔐 Advanced Security
+*   **Persistent Sessions**: Stay logged in always unless you explicitly disconnect.
+*   **Biometric Integration**: Unlock your portfolio with Fingerprint or FaceID.
+*   **Privacy Filter**: Instantly hide your balances with the "Privacy Mode" toggle.
 
-2. **Mobile**:
-   - `cd mobile`
-   - `npm install`
-   - `npx expo start`
+### 💳 Transaction Management
+*   **Global Inflow/Outflow Tracker**: Add expenses and income with specialized categories.
+*   **Real-Time Notifications**: Instant high-impact alerts for every added transaction.
+*   **INR Default**: Native support for **Indian Rupee (₹)** currency with automatic formatting.
 
-## Design Decisions
-- **Encryption**: Sensitive fields are encrypted at the repository level to ensure data is never "at rest" in plain text in MongoDB.
-- **Biometric Gateway**: A dedicated screen that blocks access to private data until successfully authenticated via system biometrics.
-- **Offline-First**: Transactions are saved to SQLite immediately and synced asynchronously to ensure a smooth user experience in low-connectivity areas.
+### 🤖 AI-Powered Utilities
+*   **Futuristic Scanner**: Scan receipts and bills with an AI-driven vision interface.
+*   **Dynamic Analytics**: Interactive pie charts and trend summaries to visualize spending habits.
+
+---
+
+## 🏗️ Technical Stack
+
+### **Frontend** (Mobile)
+*   **React Native** with **Expo** (SDK 55)
+*   **Zustand Persist**: For lightning-fast state management and permanent sessions.
+*   **Axios**: Optimized API layer with global interceptors.
+*   **React Navigation v7**: Fluid slide-in transitions and elite bottom tab bar.
+*   **Expo Notifications**: Real-time push alert system.
+
+### **Backend** (API)
+*   **Node.js** & **Express**
+*   **MongoDB Atlas**: Distributed cloud storage.
+*   **JWT Security**: INDUSTRY-standard token-based authentication.
+*   **Render Deployment**: High-availability cloud infrastructure.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+*   Node.js (v18+)
+*   Expo CLI (`npm i -g expo-cli`)
+*   Android Studio / ADB (for physical device testing)
+
+### 2. Installation
+```bash
+# Clone the repository
+git clone https://github.com/YourUsername/FinFlow.git
+
+# Navigate to mobile directory
+cd FinFlow/mobile
+
+# Install dependencies
+npm install
+
+# Start the Expo server
+npx expo start
+```
+
+### 3. Environment Setup
+Create a `.env` file in the `backend` folder:
+```
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_super_secret_key
+```
+
+---
+
+## 📜 License
+This project is for personal use and portfolio showcase. All rights reserved by **Darla Bhanumurthy**.
+
+---
+
+<div align="center">
+  Made with Passion for Personal Finance 🚀
+</div>

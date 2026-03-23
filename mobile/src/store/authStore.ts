@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient, { setAuthToken } from '../api/apiClient';
 
 interface User {
   id: string;
@@ -26,34 +29,55 @@ interface AuthState {
   updateUserProfile: (name: string, avatar?: string) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  isPrivacyMode: false,
-  currency: 'INR',
-  rememberedEmail: null,
-  rememberedPassword: null,
-  login: (user, token) => set({ user, token, isAuthenticated: true }),
-  logout: () => set({ user: null, token: null, isAuthenticated: false, isPrivacyMode: false }),
-  toggleBiometric: (val) => set((state) => ({ user: state.user ? { ...state.user, isBiometricEnabled: val } : null })),
-  togglePrivacyMode: (val) => set({ isPrivacyMode: val }),
-  setCurrency: (c) => set({ currency: c }),
-  setRememberedCredentials: (email, pass) => set({ rememberedEmail: email, rememberedPassword: pass }),
-  updateUserProfile: async (name: string, avatar?: string) => {
-    try {
-      const response = await apiClient.put('/auth/profile', { name, avatar });
-      const updatedUser = response.data;
-      set((state) => ({
-        user: state.user ? { 
-          ...state.user, 
-          name: updatedUser.name, 
-          avatar: updatedUser.avatar 
-        } : null
-      }));
-    } catch (error) {
-       console.log('Update profile error', error);
-       throw error;
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isPrivacyMode: false,
+      currency: 'INR',
+      rememberedEmail: null,
+      rememberedPassword: null,
+      login: (user, token) => {
+        setAuthToken(token);
+        set({ user, token, isAuthenticated: true });
+      },
+      logout: () => {
+        setAuthToken(null);
+        set({ user: null, token: null, isAuthenticated: false, isPrivacyMode: false });
+      },
+      toggleBiometric: (val) => set((state) => ({ user: state.user ? { ...state.user, isBiometricEnabled: val } : null })),
+      togglePrivacyMode: (val) => set({ isPrivacyMode: val }),
+      setCurrency: (c) => set({ currency: c }),
+      setRememberedCredentials: (email, pass) => set({ rememberedEmail: email, rememberedPassword: pass }),
+      updateUserProfile: async (name: string, avatar?: string) => {
+        try {
+          const response = await apiClient.put('/auth/profile', { name, avatar });
+          const updatedUser = response.data;
+          set((state) => ({
+            user: state.user ? { 
+              ...state.user, 
+              name: updatedUser.name, 
+              avatar: updatedUser.avatar 
+            } : null
+          }));
+        } catch (error) {
+           console.log('Update profile error', error);
+           throw error;
+        }
+      }
+    }),
+    {
+      name: 'finflow-auth-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: (state) => {
+         return (rehydratedState, error) => {
+           if (rehydratedState && rehydratedState.token) {
+              setAuthToken(rehydratedState.token);
+           }
+         };
+      }
     }
-  }
-}));
+  )
+);
