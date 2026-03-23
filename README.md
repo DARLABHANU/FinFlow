@@ -125,3 +125,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
   <b>Designed & Engineered by Darla Bhanumurthy</b><br/>
   Empowering financial freedom through intelligent design. 🚀
 </div>
+<div align="center">
+  <b>Wanna Contribute in this project to add more features? Do it</b><br/>
+ By making a pull request to this repo.
+</div>
