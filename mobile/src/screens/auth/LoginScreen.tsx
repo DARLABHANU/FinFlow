@@ -140,13 +140,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: THEME.colors.background },
   inner: { flex: 1, padding: 24, justifyContent: 'center' },
   heroSection: { alignItems: 'center', marginBottom: 40 },
-  logoCircle: { width: 80, height: 80, borderRadius: 28, alignItems: 'center', justifyContent: 'center', ...THEME.shadows.lg },
-  brandName: { ...THEME.typography.h1, marginTop: 16, letterSpacing: -1 },
-  heroText: { ...THEME.typography.caption, color: THEME.colors.textSecondary, marginTop: 4 },
+  logoCircle: { width: 80, height: 80, borderRadius: 28, alignItems: 'center', justifyContent: 'center', ...THEME.shadows.strong },
+  brandName: { ...THEME.typography.h1, marginTop: 16, letterSpacing: -1, color: THEME.colors.text },
+  heroText: { ...THEME.typography.caption, color: THEME.colors.textSecondary, marginTop: 4, fontWeight: '700' },
 
-  formCard: { backgroundColor: THEME.colors.surface, borderRadius: THEME.roundness.xl, padding: 24, ...THEME.shadows.md, borderWidth: 1, borderColor: THEME.colors.border },
-  formTitle: { ...THEME.typography.h2, fontSize: 22 },
-  formSubtitle: { ...THEME.typography.caption, color: THEME.colors.textTertiary, marginTop: 4, marginBottom: 32 },
+  formCard: { backgroundColor: THEME.colors.surface, borderRadius: THEME.roundness.xl, padding: 24, ...THEME.shadows.medium, borderWidth: 1, borderColor: THEME.colors.border },
+  formTitle: { ...THEME.typography.h2, fontSize: 22, color: THEME.colors.text },
+  formSubtitle: { ...THEME.typography.caption, color: THEME.colors.textTertiary, marginTop: 4, marginBottom: 32, fontWeight: '700' },
 
   inputStack: { gap: 16 },
   inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.colors.background, borderRadius: 14, height: 56, paddingHorizontal: 16 },
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   mainBtnText: { color: '#FFF', fontSize: 16, fontWeight: '900' },
   bioBtn: { width: 56, height: 56, borderRadius: 14, backgroundColor: `${THEME.colors.primary}10`, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: `${THEME.colors.primary}20` },
 
-  footerLink: { flexDirection: 'row', justifyContent: 'center', marginTop: 40 },
-  footerText: { ...THEME.typography.body, fontSize: 14, color: THEME.colors.textSecondary },
-  linkText: { ...THEME.typography.body, fontSize: 14, color: THEME.colors.primary, fontWeight: '800' }
+  footerLink: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
+  footerText: { ...THEME.typography.body, fontSize: 12.5, color: THEME.colors.textSecondary, fontWeight: '600' },
+  linkText: { ...THEME.typography.body, fontSize: 12.5, color: THEME.colors.primary, fontWeight: '800' }
 });

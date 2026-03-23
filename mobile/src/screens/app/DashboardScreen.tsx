@@ -215,6 +215,6 @@ const styles = StyleSheet.create({
   emptyWrap: { alignItems: 'center', gap: 12, paddingVertical: 40 },
   emptyTxt: { ...THEME.typography.caption, color: THEME.colors.textTertiary, fontWeight: '600' },
 
-  addTrigger: { position: 'absolute', bottom: 30, right: 25, width: 68, height: 68, borderRadius: 34, ...THEME.shadows.strong },
+  addTrigger: { position: 'absolute', bottom: 100, right: 25, width: 68, height: 68, borderRadius: 34, ...THEME.shadows.strong },
   addGradient: { width: '100%', height: '100%', borderRadius: 34, alignItems: 'center', justifyContent: 'center' }
 });

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import apiClient from '../api/apiClient';
+import { notifyTransaction } from '../services/notificationService';
+import { useAuthStore } from './authStore';
 
 export interface Transaction {
   id: string;
@@ -34,7 +36,6 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
         date: tx.timestamp ? new Date(tx.timestamp).toISOString() : new Date().toISOString(),
         note: tx.note || ''
       }));
-      // Keep full ISO date for sorting
       mapped.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
       set({ transactions: mapped });
     } catch (error) {
@@ -51,6 +52,11 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
         timestamp: data.date || new Date().toISOString()
       };
       await apiClient.post('/transactions', payload);
+      
+      // Trigger Notification
+      const symbol = useAuthStore.getState().currency === 'USD' ? '$' : '₹';
+      notifyTransaction(data.type, payload.amount, payload.category, symbol);
+      
       await get().fetchTransactions();
     } catch (error) {
       console.log('Failed to create transaction', error);
