@@ -50,6 +50,28 @@
 
 ---
 
+## 🚀 Built With
+
+### **Frontend Implementation** (Mobile)
+<div align="left">
+  <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Zustand-orange?style=for-the-badge&logo=zustand&logoColor=white" />
+  <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white" />
+</div>
+
+### **Backend Infrastructure** (API)
+<div align="left">
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/Express.js-404d59?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" />
+  <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white" />
+  <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" />
+</div>
+
+---
+
 ## 💎 Key Features & Innovations
 
 ### 🎨 1. Elite "FinTech" Design System
@@ -72,18 +94,11 @@
 
 ---
 
-## 🏗️ Technical Architecture
+## 🏗️ Technical Architecture Details
 
-### **Frontend Implementation**
-*   **React Native (Expo SDK 55)**: For a native performance feel and quick iterations.
 *   **Zustand (Persist Middleware)**: For ultra-fast, predictable state management.
 *   **Axios Interceptors**: A robust API layer with global logging and automatic token injection.
-
-### **Backend Infrastructure**
-*   **Node.js / Express**: High-speed RESTful API architecture.
-*   **MongoDB Atlas**: Globally distributed NoSQL cloud database for transactional records.
 *   **bcrypt.js**: Hardware-accelerated hashing for specialized user password encryption.
-*   **Render Cloud Deployment**: Production-grade hosting for a stable, always-available API.
 
 ---
 
